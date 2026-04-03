@@ -1,6 +1,6 @@
 # Tab Splitter
 
-Mobile-first bill splitting web app. Split a receipt across multiple people, with per-city sales tax, tip, and optional fees. Generates Venmo request deep links.
+Mobile-first bill splitting web app. Split a receipt across multiple people, with per-city sales tax, tip, and optional fees. 
 
 ---
 
@@ -37,11 +37,6 @@ ES modules require a server (browsers block file:// imports).
 # Python — simplest option, no install
 python3 -m http.server 8080
 # then open http://localhost:8080
-
-# Node
-npx serve .
-
-# VS Code: install "Live Server" extension, click "Go Live"
 ```
 
 ---
@@ -71,20 +66,6 @@ Open `tests/index.html` in a browser (via the local server above):
 ```
 http://localhost:8080/tests/
 ```
-
-You'll see a pass/fail report for every test case. No Node, no Jest, no build step.
-
-**What's tested:**
-- `calcSubtotal` — summing, edge cases, invalid input rejection
-- `calcTax` — all major city rates, zero cases, invalid input
-- `calcFee` — mandate fee, null/zero skip behavior
-- `calcTip` — standard rates, zero tip, base selection
-- `calcSharedShare` — even/uneven splits, edge divisors
-- `calcPersonTotal` — full pipeline with and without fees
-- `round2` — floating point artifact elimination
-- `resolveCity` — exact match, case-insensitivity, not-found, null/empty input
-- `getAllCityNames` — sorting, count correctness
-
 ---
 
 ## Calculation Order
@@ -106,24 +87,3 @@ If you want tip on subtotal only, change `calcTip`'s `base` parameter in `calcPe
 ## Shared Items
 
 A shared item splits a total price equally across the first N people in the session.
-N is editable — so if a $60 bottle of wine is split 3 ways among a table of 5:
-- Set divisor to 3
-- $20 is added to Person 1, Person 2, and Person 3's tabs
-
----
-
-## Architecture Notes
-
-- **`calculator.js`** has zero DOM coupling. Every function is `(number) → number`.
-  Test it, import it anywhere, trust it completely.
-
-- **`taxLookup.js`** is the only module that touches `taxRates.json`.
-  City names and rates live in the JSON — no code changes needed to add cities.
-
-- **`state.js` / `BillSession`** is the single source of truth.
-  UI modules call methods on `session` — they never mutate data directly.
-  Session auto-saves to localStorage every mutation and restores on page load (4-hour TTL).
-
-- **UI modules** (`src/ui/`) each own one screen.
-  They import from `state.js`, `calculator.js`, and `utils.js` — never from each other
-  (except `summaryScreen` imports `render` from `billScreen` for the "← Edit" button).

@@ -46,16 +46,6 @@ npx serve .
 
 ---
 
-## Deploying (Free, GitHub Pages)
-
-1. Create a public GitHub repo
-2. Push this folder
-3. Settings → Pages → Source: main branch / root
-4. Your URL: `https://<username>.github.io/<repo-name>/`
-5. Bookmark on your phone's home screen: Safari → Share → Add to Home Screen
-
----
-
 ## Adding or Updating a City
 
 Open **`data/taxRates.json`** — that's it. No code changes needed.

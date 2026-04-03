@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tab Splitter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:            #f7f6f2;
+    --surface:       #ffffff;
+    --surface2:      #f0efe9;
+    --border:        rgba(0,0,0,0.09);
+    --border-strong: rgba(0,0,0,0.16);
+    --text:          #1a1916;
+    --muted:         #6b6a66;
+    --accent:        #1a1916;
+    --green:         #1e5e3a;
+    --green-bg:      #d4edda;
+    --green-text:    #2d6a4f;
+    --red:           #7a2020;
+    --red-bg:        #fde8e8;
+    --venmo-blue:    #3D95CE;
+    --radius:        12px;
+    --radius-sm:     8px;
+    --radius-pill:   999px;
+    --font:          'DM Sans', sans-serif;
+    --mono:          'DM Mono', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:            #16150f;
+      --surface:       #1e1d16;
+      --surface2:      #252419;
+      --border:        rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.15);
+      --text:          #f0efe8;
+      --muted:         #9a9990;
+      --accent:        #f0efe8;
+      --green:         #74c69d;
+      --green-bg:      #1a3a26;
+      --green-text:    #74c69d;
+      --red:           #e07070;
+      --red-bg:        #3a1a1a;
+    }
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; -webkit-font-smoothing: antialiased; }
+  body { display: flex; flex-direction: column; }
+
+  /* ── App header ── */
+  .app-header {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .app-title    { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .app-tagline  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  /* ── Screens ── */
+  .screen { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
+  .screen--active { display: flex; }
+
+  /* ── Shared form primitives ── */
+  .field       { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; }
+
+  input[type=text],
+  input[type=number] {
+    background: var(--surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 11px 12px;
+    font-family: var(--font);
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    width: 100%;
+    appearance: none; -webkit-appearance: none;
+  }
+  input[type=text]:focus,
+  input[type=number]:focus { border-color: var(--accent); }
+  input[type=checkbox]     { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+  input.mono               { font-family: var(--mono); }
+
+  select {
+    background: var(--surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 11px 12px;
+    font-family: var(--font);
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    width: 100%;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6a66' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--accent); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .btn-primary {
+    background: var(--accent); color: var(--bg);
+    border: none; border-radius: var(--radius-sm);
+    padding: 13px 20px; width: 100%;
+    font-family: var(--font); font-size: 15px; font-weight: 500;
+    cursor: pointer;
+  }
+  .btn-primary:active { opacity: 0.85; }
+
+  .btn-ghost {
+    background: transparent; color: var(--text);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 9px 16px;
+    font-family: var(--font); font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-ghost:active { background: var(--surface2); }
+
+  .btn-new-bill {
+    background: transparent; color: var(--muted);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 7px 13px;
+    font-family: var(--font); font-size: 12px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; letter-spacing: 0.2px;
+  }
+  .btn-new-bill:active { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+
+  .section-label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; }
+  .hint          { font-size: 12px; color: var(--muted); }
+
+  /* ── Setup screen ── */
+  .setup-body { padding: 20px; display: flex; flex-direction: column; gap: 18px; max-width: 480px; width: 100%; margin: 0 auto; }
+
+  .fee-toggle-row  { display: flex; align-items: center; gap: 9px; }
+  .fee-toggle-row label { font-size: 14px; cursor: pointer; }
+  .fee-indent      { padding-left: 26px; }
+
+  /* ── Bill screen ── */
+  .bill-tabs {
+    display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+    padding: 12px 16px; border-bottom: 0.5px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .bill-tabs::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    flex-shrink: 0; padding: 7px 14px;
+    border-radius: var(--radius-pill);
+    border: 0.5px solid var(--border-strong);
+    background: transparent; color: var(--muted);
+    font-family: var(--font); font-size: 13px; cursor: pointer;
+    white-space: nowrap; transition: background 0.1s, color 0.1s;
+  }
+  .tab-btn--active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 500; }
+  .tab-btn--add    { width: 32px; height: 32px; padding: 0; border-radius: 50%; font-size: 18px; align-self: center; display: flex; align-items: center; justify-content: center; }
+
+  .bill-panels   { flex: 1; overflow-y: auto; padding: 16px; }
+
+  .panel { display: none; flex-direction: column; gap: 14px; max-width: 480px; margin: 0 auto; }
+  .panel:not([hidden]) { display: flex; }
+
+  .panel__header    { display: flex; align-items: baseline; justify-content: space-between; }
+  .panel__name      { font-size: 18px; font-weight: 600; letter-spacing: -0.2px; min-width: 0; outline: none; }
+  .panel__name:focus { border-bottom: 1.5px solid var(--accent); }
+  .panel__subtotal  { font-family: var(--mono); font-size: 14px; color: var(--muted); flex-shrink: 0; }
+
+  .items-list { border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .empty-hint { padding: 14px; font-size: 13px; color: var(--muted); text-align: center; }
+  .item-row   { display: flex; align-items: center; gap: 10px; padding: 10px 13px; border-bottom: 0.5px solid var(--border); }
+  .item-row:last-child { border-bottom: none; }
+  .item-row__label { flex: 1; font-size: 14px; }
+  .item-row__price { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+  .item-row__del   {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: none; background: var(--surface2); color: var(--muted);
+    font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .item-row__del:active { background: var(--red-bg); color: var(--red); }
+
+  .add-section        { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .add-section__label { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; }
+  .add-row            { display: flex; gap: 8px; }
+  .add-row input      { background: var(--surface2); }
+  .input-price        { max-width: 110px; font-family: var(--mono) !important; }
+  .btn-add-item, .btn-add-shared {
+    background: var(--accent); color: var(--bg);
+    border: none; border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  }
+  .btn-add-item:active, .btn-add-shared:active { opacity: 0.85; }
+
+  .shared-section     { background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .shared-divisor-row { display: flex; align-items: center; gap: 8px; }
+  .input-divisor      { max-width: 70px; text-align: center; font-family: var(--mono) !important; }
+  .shared-each        { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--green-text); }
+
+  .bill-footer { padding: 12px 16px; border-top: 0.5px solid var(--border); background: var(--surface); flex-shrink: 0; max-width: 480px; width: 100%; margin: 0 auto; }
+
+  /* ── Summary screen ── */
+
+
+  .info-bar         { display: flex; align-items: center; gap: 10px; background: var(--surface2); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 2px; }
+  .info-bar__chips  { display: flex; flex-wrap: wrap; gap: 6px 14px; flex: 1; }
+  .btn-edit-bill    { flex-shrink: 0; background: transparent; color: var(--muted); border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm); padding: 5px 10px; font-family: var(--font); font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .btn-edit-bill:active { background: var(--surface); }
+  .info-chip  { display: flex; gap: 5px; font-size: 13px; }
+  .chip-key   { color: var(--muted); }
+  .chip-val   { font-weight: 500; }
+
+  .summary-card                 { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .summary-card__header         { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 0.5px solid var(--border); }
+  .summary-card__name           { font-size: 15px; font-weight: 600; }
+  .summary-card__total          { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--green-text); }
+  .summary-card__body           { padding: 10px 15px; display: flex; flex-direction: column; gap: 0; }
+  .breakdown-items              { padding-bottom: 6px; display: flex; flex-direction: column; gap: 3px; }
+  .breakdown-item               { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .breakdown-row                { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .breakdown-row:last-child     { border-bottom: none; }
+  .breakdown-row__label         { color: var(--muted); }
+  .breakdown-row__val           { font-family: var(--mono); font-weight: 500; }
+  .summary-card__actions        { display: flex; gap: 8px; padding: 11px 15px; border-top: 0.5px solid var(--border); }
+
+  .btn-venmo {
+    flex: 1; background: var(--venmo-blue); color: #fff;
+    border: none; border-radius: var(--radius-sm); padding: 10px 14px;
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-venmo:active { opacity: 0.85; }
+
+  .btn-copy {
+    background: var(--surface2); color: var(--text);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-sm); padding: 10px 14px;
+    font-family: var(--font); font-size: 13px;
+    cursor: pointer; white-space: nowrap;
+  }
+  .btn-copy:active { background: var(--border); }
+
+  .grand-total { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 2px; color: var(--muted); }
+  .grand-total__val { font-family: var(--mono); font-weight: 500; color: var(--text); }
+
+  /* ── Toast ── */
+  #app-toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(90px);
+    background: var(--accent); color: var(--bg);
+    padding: 10px 20px; border-radius: var(--radius-pill);
+    font-size: 13px; font-weight: 500; z-index: 999;
+    transition: transform 0.2s ease; white-space: nowrap;
+    pointer-events: none;
+  }
+  #app-toast.toast--visible { transform: translateX(-50%) translateY(0); }
+  #app-toast.toast--error   { background: var(--red); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <div class="app-title">Tab Splitter</div>
+  </div>
+  <button class="btn-new-bill" id="new-bill-btn" style="display:none;">+ New bill</button>
+</header>
+
+<!-- ═══ SCREEN: SETUP ═══ -->
+<div class="screen" data-screen="setup">
+  <div class="setup-body">
+
+    <div class="field">
+      <label for="city-input">Location</label>
+      <select id="city-input">
+        <option value="">Select a city…</option>
+      </select>
+    </div>
+
+    <div class="field" id="tax-override-field" style="display:none;">
+      <label for="manual-tax">Sales tax % (manual)</label>
+      <input type="number" id="manual-tax" class="mono" step="0.01" min="0" placeholder="e.g. 9.25">
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label for="tip-input">Tip %</label>
+        <input type="number" id="tip-input" class="mono" value="18" min="0" max="100" step="1">
+      </div>
+      <div class="field">
+        <label for="people-count">People</label>
+        <input type="number" id="people-count" value="2" min="1" max="20" step="1">
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="section-label">Optional fees</div>
+
+      <div class="fee-toggle-row">
+        <input type="checkbox" id="mandate-check">
+        <label for="mandate-check">City / venue mandate fee</label>
+      </div>
+      <div class="fee-indent field" id="mandate-amount-row" style="display:none;">
+        <input type="number" id="mandate-pct" class="mono" step="0.1" min="0" placeholder="% (default 5%)">
+      </div>
+
+      <div class="fee-toggle-row">
+        <input type="checkbox" id="extra-check">
+        <label for="extra-check">Other fee (service charge, etc.)</label>
+      </div>
+      <div class="fee-indent field" id="extra-amount-row" style="display:none;">
+        <input type="number" id="extra-pct" class="mono" step="0.1" min="0" placeholder="Fee %">
+      </div>
+    </div>
+
+    <button class="btn-primary" id="start-btn">Add Items →</button>
+  </div>
+</div>
+
+<!-- ═══ SCREEN: BILL ═══ -->
+<div class="screen" data-screen="bill" style="flex-direction:column;">
+  <div id="bill-screen" style="display:contents;"></div>
+</div>
+
+<!-- ═══ SCREEN: SUMMARY ═══ -->
+<div class="screen" data-screen="summary">
+  <div id="summary-screen"></div>
+</div>
+
+<script type="module" src="./src/app.js"></script>
+</body>
+</html>
